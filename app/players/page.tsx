@@ -40,12 +40,23 @@ type CardRow = {
       ftPct?: { value: number | null; grade: string };
       astToTurnover?: { value: number | null; grade: string };
     };
+
+    winPct?: {
+      value: number | null;
+      grade: string;
+    };
+
+    styleAndRole?: {
+      comp?: string;
+      role?: string;
+      fit?: string;
+    };
   };
 };
 
-function formatValue(value: number | null | undefined) {
+function formatValue(value: number | null | undefined, suffix = "") {
   if (value === null || value === undefined) return "—";
-  return `${value}`;
+  return `${value}${suffix}`;
 }
 
 function getTierClass(tier: string | null | undefined) {
@@ -135,6 +146,7 @@ export default async function PlayersPage() {
 
           const tier = profile?.tier || card?.tier || "Pending";
           const displayName = player.display_name || player.player_name;
+          const topBadges = (profile?.badges ?? []).slice(0, 2);
 
           return (
             <Link
@@ -144,17 +156,33 @@ export default async function PlayersPage() {
             >
               <div className="cardTop">
                 <h2 className="playerName">{displayName}</h2>
-
                 <div className={getTierClass(tier)}>{tier}</div>
               </div>
 
-              <div className="mobileStats">
-                <span>{formatValue(profile?.perGame?.ppg?.value)} PPG</span>
-                <span>{formatValue(profile?.perGame?.apg?.value)} APG</span>
+              <div className="statMiniGrid">
+                <div className="miniStat">
+                  <span>PPG</span>
+                  <strong>{formatValue(profile?.perGame?.ppg?.value)}</strong>
+                </div>
+
+                <div className="miniStat">
+                  <span>APG</span>
+                  <strong>{formatValue(profile?.perGame?.apg?.value)}</strong>
+                </div>
+
+                <div className="miniStat">
+                  <span>RPG</span>
+                  <strong>{formatValue(profile?.perGame?.rpg?.value)}</strong>
+                </div>
+
+                <div className="miniStat">
+                  <span>WIN</span>
+                  <strong>{formatValue(profile?.winPct?.value, "%")}</strong>
+                </div>
               </div>
 
               <div className="badgeList">
-                {(profile?.badges ?? []).slice(0, 4).map((badge) => (
+                {topBadges.map((badge) => (
                   <div
                     key={`${badge.name}-${badge.description}`}
                     className="badgeLine"
@@ -164,28 +192,13 @@ export default async function PlayersPage() {
                   </div>
                 ))}
 
-                {(profile?.badges ?? []).length === 0 && (
+                {topBadges.length === 0 && (
                   <div className="noBadges">No badges yet</div>
                 )}
               </div>
 
-              <div className="compactStats">
-                <div className="compactStatRow">
-                  <span>PPG {formatValue(profile?.perGame?.ppg?.value)}</span>
-                  <span>APG {formatValue(profile?.perGame?.apg?.value)}</span>
-                </div>
-
-                <div className="compactStatRow">
-                  <span>RPG {formatValue(profile?.perGame?.rpg?.value)}</span>
-                  <span>SPG {formatValue(profile?.perGame?.spg?.value)}</span>
-                </div>
-
-                <div className="compactStatRow">
-                  <span>FG% {formatValue(profile?.efficiency?.fgPct?.value)}</span>
-                  <span>
-                    3PT% {formatValue(profile?.efficiency?.threePct?.value)}
-                  </span>
-                </div>
+              <div className="roleLine">
+                {profile?.styleAndRole?.role ?? "Profile Ready"}
               </div>
 
               <div className="openText">Open Profile →</div>
@@ -265,19 +278,19 @@ const pageCss = `
   }
 
   .card {
-    background: rgba(12,12,12,0.96);
+    background: linear-gradient(180deg, rgba(18,18,18,0.98), rgba(7,7,7,0.98));
     border: 1px solid rgba(255,255,255,0.16);
     border-radius: 18px;
-    padding: 20px;
+    padding: 18px;
     width: 100%;
     max-width: 320px;
-    min-height: 330px;
+    min-height: 300px;
     color: white;
     text-decoration: none;
     box-shadow: 0 0 24px rgba(250,204,21,0.05);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 14px;
   }
 
   .cardTop {
@@ -285,7 +298,6 @@ const pageCss = `
     justify-content: space-between;
     align-items: flex-start;
     gap: 12px;
-    margin-bottom: 18px;
   }
 
   .playerName {
@@ -293,11 +305,12 @@ const pageCss = `
     font-size: 22px;
     letter-spacing: -0.5px;
     word-break: break-word;
+    line-height: 1.1;
   }
 
   .tierBadge {
-    min-width: 44px;
-    height: 44px;
+    min-width: 46px;
+    height: 46px;
     border-radius: 12px;
     display: grid;
     place-items: center;
@@ -346,28 +359,57 @@ const pageCss = `
   .tierPending {
     background: linear-gradient(135deg, #27272a, #52525b);
     color: #f4f4f5;
-    font-size: 12px;
+    font-size: 11px;
+  }
+
+  .statMiniGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .miniStat {
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 9px;
+    background: rgba(255,255,255,0.045);
+  }
+
+  .miniStat span {
+    display: block;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 950;
+    letter-spacing: 1px;
+  }
+
+  .miniStat strong {
+    display: block;
+    margin-top: 4px;
+    color: white;
+    font-size: 17px;
+    font-weight: 950;
   }
 
   .badgeList {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 18px;
+    gap: 7px;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 900;
   }
 
   .badgeLine {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .badgeIcon {
-    width: 22px;
+    width: 20px;
     display: inline-block;
     text-align: center;
     flex-shrink: 0;
@@ -379,32 +421,20 @@ const pageCss = `
     font-size: 13px;
   }
 
-  .compactStats {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 18px;
-    margin-bottom: 18px;
-    font-family: monospace;
-    font-size: 14px;
-    font-weight: 900;
-  }
-
-  .compactStatRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 18px;
-  }
-
-  .mobileStats {
-    display: none;
+  .roleLine {
+    margin-top: auto;
+    color: #f8e08e;
+    font-size: 12px;
+    line-height: 1.25;
+    font-weight: 800;
+    overflow-wrap: anywhere;
   }
 
   .openText {
-    margin-top: 18px;
     color: #facc15;
     font-weight: 950;
     font-family: monospace;
+    font-size: 13px;
   }
 
   .empty {
@@ -421,12 +451,12 @@ const pageCss = `
 
   @media (max-width: 700px) {
     .page {
-      padding: max(18px, env(safe-area-inset-top)) 10px 20px;
+      padding: max(18px, env(safe-area-inset-top)) 12px 24px;
     }
 
     .header {
       gap: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
     }
 
     .logo {
@@ -435,7 +465,7 @@ const pageCss = `
     }
 
     .title {
-      font-size: 32px;
+      font-size: 34px;
       margin: 8px 0 4px;
       line-height: 1;
     }
@@ -451,64 +481,77 @@ const pageCss = `
     }
 
     .grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
       width: 100%;
     }
 
     .card {
       max-width: none;
-      min-height: 118px;
-      padding: 8px;
-      border-radius: 12px;
-      box-shadow: none;
-      justify-content: flex-start;
-      gap: 6px;
+      min-height: 230px;
+      padding: 11px;
+      border-radius: 14px;
+      gap: 10px;
+      box-shadow: 0 0 18px rgba(250,204,21,0.035);
     }
 
     .cardTop {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 0;
+      gap: 8px;
     }
 
     .playerName {
-      font-size: 11px;
-      line-height: 1.1;
-      min-height: 25px;
-      max-height: 36px;
+      font-size: 13px;
+      min-height: 30px;
+      max-height: 46px;
       overflow: hidden;
-      letter-spacing: -0.2px;
     }
 
     .tierBadge {
-      min-width: 32px;
-      width: 32px;
-      height: 28px;
-      border-radius: 8px;
-      font-size: 12px;
+      min-width: 38px;
+      width: 38px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 14px;
     }
 
     .tierPending {
       font-size: 8px;
     }
 
-    .mobileStats {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2px;
-      color: #cbd5e1;
-      font-family: monospace;
-      font-size: 9px;
-      font-weight: 900;
-      line-height: 1.1;
+    .statMiniGrid {
+      gap: 6px;
     }
 
-    .badgeList,
-    .compactStats,
+    .miniStat {
+      padding: 7px;
+      border-radius: 9px;
+    }
+
+    .miniStat span {
+      font-size: 8px;
+    }
+
+    .miniStat strong {
+      font-size: 13px;
+    }
+
+    .badgeList {
+      font-size: 10px;
+      gap: 5px;
+    }
+
+    .badgeIcon {
+      width: 16px;
+    }
+
+    .roleLine {
+      font-size: 10px;
+      max-height: 28px;
+      overflow: hidden;
+    }
+
     .openText {
-      display: none;
+      font-size: 10px;
     }
   }
 `;
