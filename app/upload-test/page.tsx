@@ -243,18 +243,6 @@ export default function UploadTestPage() {
 
           {statusText && <p style={styles.status}>{statusText}</p>}
         </section>
-
-        <section style={styles.infoCard}>
-          <h2 style={styles.infoTitle}>Upload Flow</h2>
-
-          <div style={styles.flowList}>
-            <div style={styles.flowItem}>1. Read card image</div>
-            <div style={styles.flowItem}>2. Extract player stats</div>
-            <div style={styles.flowItem}>3. Evaluate badges and tier</div>
-            <div style={styles.flowItem}>4. Generate player comparison</div>
-            <div style={styles.flowItem}>5. Save to live roster</div>
-          </div>
-        </section>
       </section>
 
       {extractedStats && (
@@ -263,7 +251,7 @@ export default function UploadTestPage() {
             <div>
               <h2 style={styles.sectionTitle}>Extracted Stats</h2>
               <p style={styles.sectionSubtext}>
-                These are the numbers read from the uploaded card before saving.
+                Numbers read from the uploaded player card.
               </p>
             </div>
 
@@ -317,11 +305,7 @@ export default function UploadTestPage() {
 
                 <div>
                   <span style={styles.smallLabel}>Tier</span>
-                  <strong>
-                    {result.card?.profile_json?.tier ??
-                      result.card?.profile_json?.styleAndRole?.role ??
-                      "Saved"}
-                  </strong>
+                  <strong>{result.card?.profile_json?.tier ?? "Saved"}</strong>
                 </div>
               </div>
 
@@ -363,7 +347,7 @@ const styles: Record<string, CSSProperties> = {
     background:
       "radial-gradient(circle at top, #1b1b1b 0%, #060606 42%, #000 100%)",
     color: "white",
-    padding: "clamp(16px, 4vw, 32px)",
+    padding: "max(24px, env(safe-area-inset-top)) clamp(16px, 4vw, 32px) 32px",
     fontFamily: "Arial, Helvetica, sans-serif",
     boxSizing: "border-box",
     overflowX: "hidden",
@@ -381,15 +365,15 @@ const styles: Record<string, CSSProperties> = {
   logo: {
     color: "white",
     textDecoration: "none",
-    fontSize: "clamp(26px, 6vw, 40px)",
+    fontSize: "clamp(24px, 5vw, 38px)",
     fontWeight: 950,
     letterSpacing: "-1px",
   },
 
   title: {
-    margin: "10px 0",
+    margin: "12px 0",
     color: "#facc15",
-    fontSize: "clamp(34px, 9vw, 56px)",
+    fontSize: "clamp(36px, 9vw, 58px)",
     lineHeight: 1,
     fontWeight: 950,
     letterSpacing: "-1px",
@@ -416,7 +400,7 @@ const styles: Record<string, CSSProperties> = {
 
   layout: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 520px))",
+    gridTemplateColumns: "minmax(0, 520px)",
     gap: "24px",
     alignItems: "stretch",
     marginTop: "28px",
@@ -430,37 +414,6 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: "18px",
     padding: "clamp(18px, 4vw, 24px)",
     boxSizing: "border-box",
-  },
-
-  infoCard: {
-    width: "100%",
-    maxWidth: "520px",
-    border: "1px solid rgba(250,204,21,0.24)",
-    background: "rgba(12,12,12,0.76)",
-    borderRadius: "18px",
-    padding: "clamp(18px, 4vw, 24px)",
-    boxSizing: "border-box",
-  },
-
-  infoTitle: {
-    margin: "0 0 16px",
-    color: "#facc15",
-    fontSize: "24px",
-  },
-
-  flowList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
-
-  flowItem: {
-    border: "1px solid rgba(255,255,255,0.12)",
-    borderRadius: "12px",
-    padding: "12px",
-    color: "#e5e7eb",
-    fontWeight: 800,
-    background: "rgba(255,255,255,0.04)",
   },
 
   label: {

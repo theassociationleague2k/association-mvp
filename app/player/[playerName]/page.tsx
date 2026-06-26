@@ -2,6 +2,9 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type Badge = {
   name: string;
   description: string;
@@ -67,7 +70,13 @@ function getGradeBadgeStyle(grade: string | null | undefined): CSSProperties {
   const normalizedGrade = grade?.trim().toUpperCase() || "N/A";
 
   const base: CSSProperties = {
-    ...styles.gradeBadge,
+    borderRadius: "8px",
+    padding: "7px 12px",
+    fontWeight: 950,
+    minWidth: "48px",
+    textAlign: "center",
+    border: "1px solid rgba(255,255,255,0.18)",
+    fontSize: "14px",
   };
 
   if (normalizedGrade === "S" || normalizedGrade === "S+") {
@@ -134,9 +143,20 @@ function getGradeBadgeStyle(grade: string | null | undefined): CSSProperties {
 function getTierStyle(tier: string | undefined): CSSProperties {
   const normalizedTier = tier?.trim().toUpperCase() || "PENDING";
 
+  const base: CSSProperties = {
+    marginTop: "16px",
+    borderRadius: "13px",
+    padding: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    textTransform: "uppercase",
+    fontWeight: 950,
+  };
+
   if (normalizedTier.startsWith("S")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #4c1d95, #9333ea)",
       color: "#faf5ff",
       boxShadow: "0 0 20px rgba(147,51,234,0.35)",
@@ -145,7 +165,7 @@ function getTierStyle(tier: string | undefined): CSSProperties {
 
   if (normalizedTier.startsWith("A")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #064e3b, #22c55e)",
       color: "#ecfdf5",
     };
@@ -153,7 +173,7 @@ function getTierStyle(tier: string | undefined): CSSProperties {
 
   if (normalizedTier.startsWith("B")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
       color: "#eff6ff",
     };
@@ -161,7 +181,7 @@ function getTierStyle(tier: string | undefined): CSSProperties {
 
   if (normalizedTier.startsWith("C")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #ca8a04, #facc15)",
       color: "#1c1917",
     };
@@ -169,7 +189,7 @@ function getTierStyle(tier: string | undefined): CSSProperties {
 
   if (normalizedTier.startsWith("D")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #7c2d12, #f97316)",
       color: "#fff7ed",
     };
@@ -177,13 +197,17 @@ function getTierStyle(tier: string | undefined): CSSProperties {
 
   if (normalizedTier.startsWith("F")) {
     return {
-      ...styles.tierBar,
+      ...base,
       background: "linear-gradient(135deg, #450a0a, #dc2626)",
       color: "#fef2f2",
     };
   }
 
-  return styles.tierBar;
+  return {
+    ...base,
+    background: "linear-gradient(135deg, #27272a, #52525b)",
+    color: "#f4f4f5",
+  };
 }
 
 function StatRow({
@@ -196,13 +220,11 @@ function StatRow({
   suffix?: string;
 }) {
   return (
-    <div style={styles.statRow}>
-      <span style={styles.statLabel}>{label}</span>
+    <div className="statRow">
+      <span className="statLabel">{label}</span>
 
-      <div style={styles.statRight}>
-        <span style={styles.statValue}>
-          {formatValue(stat?.value, suffix)}
-        </span>
+      <div className="statRight">
+        <span className="statValue">{formatValue(stat?.value, suffix)}</span>
 
         <span style={getGradeBadgeStyle(stat?.grade)}>
           {stat?.grade ?? "N/A"}
@@ -228,17 +250,16 @@ export default async function PlayerPage({
 
   if (playerError || !player) {
     return (
-      <main style={styles.page}>
-        <Link href="/players" style={styles.backLink}>
+      <main className="page">
+        <style>{pageCss}</style>
+
+        <Link href="/players" className="backLink">
           ← Back to roster
         </Link>
 
-        <section style={styles.errorBox}>
+        <section className="errorBox">
           <h1>Player Not Found</h1>
-          <p>
-            Could not find this player profile. The database is being dramatic
-            again.
-          </p>
+          <p>Could not find this player profile.</p>
         </section>
       </main>
     );
@@ -254,12 +275,14 @@ export default async function PlayerPage({
 
   if (cardError || !card) {
     return (
-      <main style={styles.page}>
-        <Link href="/players" style={styles.backLink}>
+      <main className="page">
+        <style>{pageCss}</style>
+
+        <Link href="/players" className="backLink">
           ← Back to roster
         </Link>
 
-        <section style={styles.errorBox}>
+        <section className="errorBox">
           <h1>No Card Saved</h1>
           <p>This player exists, but no player card profile is saved yet.</p>
         </section>
@@ -273,65 +296,70 @@ export default async function PlayerPage({
     profile.playerName || player.display_name || player.player_name;
 
   return (
-    <main style={styles.page}>
-      <header style={styles.header}>
-        <Link href="/" style={styles.logo}>
+    <main className="page">
+      <style>{pageCss}</style>
+
+      <header className="header">
+        <Link href="/" className="logo">
           The Association
         </Link>
 
-        <nav style={styles.nav}>
-          <Link href="/players" style={styles.navLink}>
+        <nav className="nav">
+          <Link href="/players" className="navLink">
             Roster
           </Link>
 
-          <Link href="/submit-player" style={styles.navButton}>
+          <Link href="/submit-player" className="navButton">
             Submit Player
           </Link>
         </nav>
       </header>
 
-      <section style={styles.grid}>
-        <aside style={styles.leftPanel}>
-          <h1 style={styles.playerName}>{displayName}</h1>
+      <section className="grid">
+        <aside className="leftPanel">
+          <h1 className="playerName">{displayName}</h1>
 
-          <section style={styles.section}>
-            <h3 style={styles.sectionTitle}>Badges</h3>
+          <section className="section">
+            <h3 className="sectionTitle">Badges</h3>
 
-            <div style={styles.badgeStack}>
+            <div className="badgeStack">
               {(profile.badges ?? []).map((badge) => (
-                <div key={`${badge.name}-${badge.description}`} style={styles.badgeCard}>
-                  <div style={styles.badgeName}>
+                <div
+                  key={`${badge.name}-${badge.description}`}
+                  className="badgeCard"
+                >
+                  <div className="badgeName">
                     <span>{badge.icon}</span>
                     <strong>{badge.name}</strong>
                   </div>
 
-                  <p style={styles.badgeDescription}>{badge.description}</p>
+                  <p className="badgeDescription">{badge.description}</p>
                 </div>
               ))}
 
               {(profile.badges ?? []).length === 0 && (
-                <p style={styles.muted}>No badges saved yet.</p>
+                <p className="muted">No badges saved yet.</p>
               )}
             </div>
           </section>
 
-          <section style={styles.section}>
-            <h3 style={styles.sectionTitle}>Style & Role</h3>
+          <section className="section">
+            <h3 className="sectionTitle">Style & Role</h3>
 
-            <div style={styles.roleRow}>
+            <div className="roleRow">
               <strong>Role</strong>
               <span>{profile.styleAndRole?.role ?? "Pending"}</span>
             </div>
 
-            <div style={styles.roleRow}>
+            <div className="roleRow">
               <strong>Fit</strong>
               <span>{profile.styleAndRole?.fit ?? "Pending"}</span>
             </div>
           </section>
         </aside>
 
-        <section style={styles.middlePanel}>
-          <h2 style={styles.panelTitle}>Per-Game</h2>
+        <section className="middlePanel">
+          <h2 className="panelTitle">Per-Game</h2>
 
           <StatRow label="PPG" stat={profile.perGame?.ppg} />
           <StatRow label="APG" stat={profile.perGame?.apg} />
@@ -343,14 +371,14 @@ export default async function PlayerPage({
             <StatRow label="TOPG" stat={profile.perGame.topg} />
           )}
 
-          <div style={styles.divider} />
+          <div className="divider" />
 
           <StatRow label="AST/TO" stat={profile.efficiency?.astToTurnover} />
           <StatRow label="FG%" stat={profile.efficiency?.fgPct} suffix="%" />
           <StatRow label="3PT%" stat={profile.efficiency?.threePct} suffix="%" />
           <StatRow label="FT%" stat={profile.efficiency?.ftPct} suffix="%" />
 
-          <div style={styles.divider} />
+          <div className="divider" />
 
           <StatRow label="WIN%" stat={profile.winPct} suffix="%" />
 
@@ -360,12 +388,12 @@ export default async function PlayerPage({
           </div>
 
           {(profile.associationLeader ?? []).length > 0 && (
-            <section style={styles.section}>
-              <h3 style={styles.sectionTitle}>Association Leader</h3>
+            <section className="section">
+              <h3 className="sectionTitle">Association Leader</h3>
 
-              <div style={styles.leaderStack}>
+              <div className="leaderStack">
                 {(profile.associationLeader ?? []).map((leader) => (
-                  <div key={leader} style={styles.leaderBadge}>
+                  <div key={leader} className="leaderBadge">
                     {leader}
                   </div>
                 ))}
@@ -374,24 +402,24 @@ export default async function PlayerPage({
           )}
         </section>
 
-        <section style={styles.rightPanel}>
-          <article style={styles.scoutingBox}>
-            <h2 style={styles.scoutingTitle}>Strengths</h2>
-            <p style={styles.scoutingText}>
+        <section className="rightPanel">
+          <article className="scoutingBox">
+            <h2 className="scoutingTitle">Strengths</h2>
+            <p className="scoutingText">
               {profile.scouting?.strengths ?? "Strengths pending."}
             </p>
           </article>
 
-          <article style={styles.scoutingBox}>
-            <h2 style={styles.scoutingTitle}>Weaknesses</h2>
-            <p style={styles.scoutingText}>
+          <article className="scoutingBox">
+            <h2 className="scoutingTitle">Weaknesses</h2>
+            <p className="scoutingText">
               {profile.scouting?.weaknesses ?? "Weaknesses pending."}
             </p>
           </article>
 
-          <article style={styles.summaryBox}>
-            <h2 style={styles.summaryTitle}>Final Scouting Summary</h2>
-            <p style={styles.scoutingText}>
+          <article className="summaryBox">
+            <h2 className="summaryTitle">Final Scouting Summary</h2>
+            <p className="scoutingText">
               {profile.scouting?.finalSummary ?? "Final summary pending."}
             </p>
           </article>
@@ -401,267 +429,331 @@ export default async function PlayerPage({
   );
 }
 
-const styles: Record<string, CSSProperties> = {
-  page: {
-    minHeight: "100vh",
-    background:
-      "radial-gradient(circle at top, #1b1b1b 0%, #060606 42%, #000 100%)",
-    color: "white",
-    padding: "28px",
-    fontFamily: "Arial, Helvetica, sans-serif",
-  },
+const pageCss = `
+  * {
+    box-sizing: border-box;
+  }
 
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "28px",
-  },
+  .page {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #1b1b1b 0%, #060606 42%, #000 100%);
+    color: white;
+    padding: max(18px, env(safe-area-inset-top)) clamp(14px, 3vw, 28px) 28px;
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: hidden;
+  }
 
-  logo: {
-    color: "#facc15",
-    fontWeight: 950,
-    fontSize: "28px",
-    textDecoration: "none",
-    letterSpacing: "-0.8px",
-  },
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
 
-  nav: {
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-  },
+  .logo {
+    color: #facc15;
+    font-weight: 950;
+    font-size: clamp(22px, 6vw, 28px);
+    text-decoration: none;
+    letter-spacing: -0.8px;
+  }
 
-  navLink: {
-    color: "white",
-    textDecoration: "none",
-    fontWeight: 800,
-    opacity: 0.85,
-  },
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 
-  navButton: {
-    color: "#facc15",
-    textDecoration: "none",
-    border: "1px solid rgba(250,204,21,0.7)",
-    padding: "10px 14px",
-    borderRadius: "10px",
-    fontWeight: 900,
-    textTransform: "uppercase",
-    fontSize: "13px",
-  },
+  .navLink {
+    color: white;
+    text-decoration: none;
+    font-weight: 800;
+    opacity: 0.85;
+  }
 
-  backLink: {
-    color: "#facc15",
-    textDecoration: "none",
-    fontWeight: 900,
-  },
+  .navButton {
+    color: #facc15;
+    text-decoration: none;
+    border: 1px solid rgba(250,204,21,0.7);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: 12px;
+    white-space: nowrap;
+  }
 
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 0.85fr 1.2fr",
-    gap: "22px",
-    alignItems: "stretch",
-  },
+  .backLink {
+    color: #facc15;
+    text-decoration: none;
+    font-weight: 900;
+  }
 
-  leftPanel: {
-    background: "rgba(8,8,8,0.95)",
-    border: "1px solid rgba(250,204,21,0.5)",
-    borderRadius: "18px",
-    padding: "22px",
-    boxShadow: "0 0 30px rgba(250,204,21,0.06)",
-  },
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr) minmax(0, 1.2fr);
+    gap: 22px;
+    align-items: stretch;
+    width: 100%;
+  }
 
-  middlePanel: {
-    background: "rgba(8,8,8,0.95)",
-    border: "1px solid rgba(255,255,255,0.16)",
-    borderRadius: "18px",
-    padding: "22px",
-  },
+  .leftPanel,
+  .middlePanel,
+  .scoutingBox,
+  .summaryBox,
+  .errorBox {
+    background: rgba(8,8,8,0.95);
+    border-radius: 18px;
+  }
 
-  rightPanel: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-  },
+  .leftPanel {
+    border: 1px solid rgba(250,204,21,0.5);
+    padding: clamp(16px, 4vw, 22px);
+    box-shadow: 0 0 30px rgba(250,204,21,0.06);
+    min-width: 0;
+  }
 
-  playerName: {
-    margin: "0 0 24px",
-    color: "#facc15",
-    fontSize: "34px",
-    letterSpacing: "-1px",
-  },
+  .middlePanel {
+    border: 1px solid rgba(255,255,255,0.16);
+    padding: clamp(16px, 4vw, 22px);
+    min-width: 0;
+  }
 
-  panelTitle: {
-    margin: "0 0 20px",
-    textAlign: "center",
-    color: "#facc15",
-    textTransform: "uppercase",
-    fontSize: "30px",
-    letterSpacing: "1px",
-  },
+  .rightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+  }
 
-  section: {
-    marginTop: "20px",
-  },
+  .playerName {
+    margin: 0 0 22px;
+    color: #facc15;
+    font-size: clamp(30px, 9vw, 42px);
+    line-height: 1;
+    letter-spacing: -1px;
+    overflow-wrap: anywhere;
+  }
 
-  sectionTitle: {
-    margin: "0 0 12px",
-    color: "#facc15",
-    textTransform: "uppercase",
-    fontSize: "13px",
-    letterSpacing: "1.5px",
-  },
+  .panelTitle {
+    margin: 0 0 18px;
+    text-align: center;
+    color: #facc15;
+    text-transform: uppercase;
+    font-size: clamp(26px, 8vw, 34px);
+    letter-spacing: 1px;
+  }
 
-  badgeStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
+  .section {
+    margin-top: 20px;
+  }
 
-  badgeCard: {
-    background: "rgba(255,255,255,0.055)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    borderRadius: "10px",
-    padding: "12px",
-  },
+  .sectionTitle {
+    margin: 0 0 12px;
+    color: #facc15;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
 
-  badgeName: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontWeight: 950,
-    fontSize: "16px",
-  },
+  .badgeStack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-  badgeDescription: {
-    margin: "7px 0 0",
-    color: "#cbd5e1",
-    fontSize: "13px",
-    lineHeight: 1.35,
-  },
+  .badgeCard {
+    background: rgba(255,255,255,0.055);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px;
+    min-width: 0;
+  }
 
-  roleRow: {
-    display: "grid",
-    gridTemplateColumns: "64px 1fr",
-    gap: "10px",
-    borderTop: "1px solid rgba(255,255,255,0.11)",
-    padding: "12px 0",
-    lineHeight: 1.4,
-  },
+  .badgeName {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 950;
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
 
-  statRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottom: "1px solid rgba(255,255,255,0.1)",
-    padding: "11px 0",
-  },
+  .badgeDescription {
+    margin: 7px 0 0;
+    color: #cbd5e1;
+    font-size: 13px;
+    line-height: 1.35;
+  }
 
-  statLabel: {
-    color: "#cbd5e1",
-    fontWeight: 900,
-    fontSize: "16px",
-  },
+  .roleRow {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.11);
+    padding: 12px 0;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
 
-  statRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
+  .statRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 11px 0;
+  }
 
-  statValue: {
-    fontSize: "23px",
-    fontWeight: 950,
-  },
+  .statLabel {
+    color: #cbd5e1;
+    font-weight: 900;
+    font-size: 16px;
+  }
 
-  gradeBadge: {
-    borderRadius: "8px",
-    padding: "7px 14px",
-    fontWeight: 950,
-    minWidth: "54px",
-    textAlign: "center",
-    border: "1px solid rgba(255,255,255,0.18)",
-  },
+  .statRight {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
 
-  divider: {
-    height: "1px",
-    background: "rgba(250,204,21,0.35)",
-    margin: "16px 0",
-  },
+  .statValue {
+    font-size: clamp(20px, 6vw, 25px);
+    font-weight: 950;
+  }
 
-  tierBar: {
-    marginTop: "16px",
-    borderRadius: "13px",
-    padding: "16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    textTransform: "uppercase",
-    fontWeight: 950,
-    background: "linear-gradient(135deg, #4c1d95, #9333ea)",
-    color: "#faf5ff",
-  },
+  .divider {
+    height: 1px;
+    background: rgba(250,204,21,0.35);
+    margin: 16px 0;
+  }
 
-  leaderStack: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-  },
+  .leaderStack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-  leaderBadge: {
-    background: "rgba(255,255,255,0.06)",
-    borderRadius: "9px",
-    padding: "12px",
-    color: "#facc15",
-    fontWeight: 950,
-  },
+  .leaderBadge {
+    background: rgba(255,255,255,0.06);
+    border-radius: 9px;
+    padding: 12px;
+    color: #facc15;
+    font-weight: 950;
+  }
 
-  scoutingBox: {
-    background: "rgba(8,8,8,0.95)",
-    border: "1px solid rgba(255,255,255,0.14)",
-    borderRadius: "18px",
-    padding: "22px",
-    minHeight: "150px",
-  },
+  .scoutingBox {
+    border: 1px solid rgba(255,255,255,0.14);
+    padding: clamp(16px, 4vw, 22px);
+    min-height: auto;
+  }
 
-  scoutingTitle: {
-    margin: "0 0 18px",
-    fontSize: "30px",
-  },
+  .scoutingTitle {
+    margin: 0 0 14px;
+    font-size: clamp(26px, 7vw, 34px);
+    line-height: 1.1;
+  }
 
-  scoutingText: {
-    color: "#cbd5e1",
-    lineHeight: 1.55,
-    margin: 0,
-  },
+  .scoutingText {
+    color: #cbd5e1;
+    line-height: 1.55;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+  }
 
-  summaryBox: {
-    background: "rgba(8,8,8,0.96)",
-    color: "#f8e08e",
-    border: "1px solid rgba(250,204,21,0.75)",
-    borderRadius: "18px",
-    padding: "22px",
-    lineHeight: 1.55,
-    fontWeight: 500,
-    boxShadow: "0 0 24px rgba(250,204,21,0.08)",
-    minHeight: "210px",
-  },
+  .summaryBox {
+    color: #f8e08e;
+    border: 1px solid rgba(250,204,21,0.75);
+    padding: clamp(16px, 4vw, 22px);
+    line-height: 1.55;
+    font-weight: 500;
+    box-shadow: 0 0 24px rgba(250,204,21,0.08);
+    min-height: auto;
+  }
 
-  summaryTitle: {
-    margin: "0 0 18px",
-    color: "#f8e08e",
-    fontSize: "30px",
-  },
+  .summaryTitle {
+    margin: 0 0 14px;
+    color: #f8e08e;
+    font-size: clamp(26px, 7vw, 34px);
+    line-height: 1.1;
+  }
 
-  muted: {
-    color: "#94a3b8",
-  },
+  .muted {
+    color: #94a3b8;
+  }
 
-  errorBox: {
-    marginTop: "30px",
-    border: "1px solid rgba(250,204,21,0.35)",
-    borderRadius: "18px",
-    padding: "24px",
-    background: "rgba(8,8,8,0.95)",
-  },
-};
+  .errorBox {
+    margin-top: 30px;
+    border: 1px solid rgba(250,204,21,0.35);
+    padding: 24px;
+  }
+
+  @media (max-width: 1050px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+
+    .middlePanel {
+      order: 1;
+    }
+
+    .leftPanel {
+      order: 2;
+    }
+
+    .rightPanel {
+      order: 3;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .page {
+      padding-left: 14px;
+      padding-right: 14px;
+      padding-bottom: 22px;
+    }
+
+    .header {
+      margin-bottom: 18px;
+    }
+
+    .nav {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .navButton,
+    .navLink {
+      font-size: 12px;
+    }
+
+    .leftPanel,
+    .middlePanel,
+    .scoutingBox,
+    .summaryBox {
+      border-radius: 16px;
+    }
+
+    .roleRow {
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .statRow {
+      padding: 12px 0;
+    }
+
+    .statRight {
+      gap: 8px;
+    }
+
+    .scoutingText {
+      font-size: 14px;
+    }
+  }
+`;
