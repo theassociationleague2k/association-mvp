@@ -11,42 +11,39 @@ export default function HomePage() {
           style={styles.homeImage}
         />
 
-        {/* Upload Player tab */}
         <Link
           href="/submit-player"
           aria-label="Upload Player"
           style={{
             ...styles.hotspot,
-            top: "66%",
-            left: "19%",
-            width: "24%",
-            height: "10%",
+            top: "70%",
+            left: "9%",
+            width: "34%",
+            height: "12%",
           }}
         />
 
-        {/* Roster tab */}
         <Link
           href="/players"
           aria-label="Roster"
           style={{
             ...styles.hotspot,
-            top: "66%",
+            top: "70%",
             left: "43%",
-            width: "24%",
-            height: "10%",
+            width: "26%",
+            height: "12%",
           }}
         />
 
-        {/* About tab */}
         <Link
           href="/"
           aria-label="About"
           style={{
             ...styles.hotspot,
-            top: "66%",
-            left: "67%",
-            width: "20%",
-            height: "10%",
+            top: "70%",
+            left: "69%",
+            width: "24%",
+            height: "12%",
           }}
         />
       </div>
@@ -62,17 +59,14 @@ const styles: Record<string, CSSProperties> = {
     margin: 0,
     padding: 0,
     overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: "grid",
+    placeItems: "center",
   },
 
   stage: {
     position: "relative",
-    width: "100vw",
-    height: "100vh",
-    maxWidth: "1600px",
-    maxHeight: "900px",
+    width: "min(100vw, calc(100vh * 16 / 9))",
+    aspectRatio: "16 / 9",
   },
 
   homeImage: {
