@@ -1,0 +1,97 @@
+import Link from "next/link";
+import type { CSSProperties } from "react";
+
+export default function HomePage() {
+  return (
+    <main style={styles.page}>
+      <div style={styles.stage}>
+        <img
+          src="/association-clean-homepage.png"
+          alt="The Association homepage"
+          style={styles.homeImage}
+        />
+
+        {/* Upload Player tab */}
+        <Link
+          href="/submit-player"
+          aria-label="Upload Player"
+          style={{
+            ...styles.hotspot,
+            top: "66%",
+            left: "19%",
+            width: "24%",
+            height: "10%",
+          }}
+        />
+
+        {/* Roster tab */}
+        <Link
+          href="/players"
+          aria-label="Roster"
+          style={{
+            ...styles.hotspot,
+            top: "66%",
+            left: "43%",
+            width: "24%",
+            height: "10%",
+          }}
+        />
+
+        {/* About tab */}
+        <Link
+          href="/"
+          aria-label="About"
+          style={{
+            ...styles.hotspot,
+            top: "66%",
+            left: "67%",
+            width: "20%",
+            height: "10%",
+          }}
+        />
+      </div>
+    </main>
+  );
+}
+
+const styles: Record<string, CSSProperties> = {
+  page: {
+    width: "100vw",
+    height: "100vh",
+    background: "#000000",
+    margin: 0,
+    padding: 0,
+    overflow: "hidden",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  stage: {
+    position: "relative",
+    width: "100vw",
+    height: "100vh",
+    maxWidth: "1600px",
+    maxHeight: "900px",
+  },
+
+  homeImage: {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    objectPosition: "center center",
+    userSelect: "none",
+    pointerEvents: "none",
+  },
+
+  hotspot: {
+    position: "absolute",
+    zIndex: 10,
+    display: "block",
+    cursor: "pointer",
+    background: "transparent",
+    borderRadius: "10px",
+  },
+};
