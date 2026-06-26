@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import type { CSSProperties } from "react";
 
 type ExtractedStats = {
   name: string;
@@ -33,6 +35,11 @@ type UploadResult = {
     profile_json: {
       playerName?: string;
       tier?: string;
+      styleAndRole?: {
+        comp?: string;
+        role?: string;
+        fit?: string;
+      };
     };
     created_at: string;
   };
@@ -55,6 +62,28 @@ function fileToDataUrl(file: File) {
   });
 }
 
+function formatStat(value: number | undefined | null, suffix = "") {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return `${value}${suffix}`;
+}
+
+function StatBox({
+  label,
+  value,
+  suffix = "",
+}: {
+  label: string;
+  value: number | undefined;
+  suffix?: string;
+}) {
+  return (
+    <div style={styles.statBox}>
+      <span style={styles.statLabel}>{label}</span>
+      <strong style={styles.statValue}>{formatStat(value, suffix)}</strong>
+    </div>
+  );
+}
+
 export default function UploadTestPage() {
   const [manualPlayerName, setManualPlayerName] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -74,6 +103,7 @@ export default function UploadTestPage() {
     setLoading(true);
     setResult(null);
     setExtractedStats(null);
+    setStatusText("");
 
     try {
       setStatusText("Reading player card...");
@@ -90,18 +120,18 @@ export default function UploadTestPage() {
 
       const readData = await readResponse.json();
 
-     if (!readResponse.ok || !readData.stats) {
-  const details =
-    typeof readData.details === "string"
-      ? readData.details
-      : JSON.stringify(readData.details ?? "", null, 2);
+      if (!readResponse.ok || !readData.stats) {
+        const details =
+          typeof readData.details === "string"
+            ? readData.details
+            : JSON.stringify(readData.details ?? "", null, 2);
 
-  throw new Error(
-    `${readData.error || "Could not extract stats from this card."}${
-      details ? `\n\nDetails:\n${details}` : ""
-    }`
-  );
-}
+        throw new Error(
+          `${readData.error || "Could not extract stats from this card."}${
+            details ? `\n\nDetails:\n${details}` : ""
+          }`
+        );
+      }
 
       const stats = readData.stats as ExtractedStats;
       setExtractedStats(stats);
@@ -109,7 +139,7 @@ export default function UploadTestPage() {
       const finalPlayerName =
         stats.name?.trim() || manualPlayerName.trim() || "Unknown Player";
 
-      setStatusText("Uploading and saving evaluated profile...");
+      setStatusText("Saving evaluated player profile...");
 
       const formData = new FormData();
       formData.append("playerName", finalPlayerName);
@@ -124,121 +154,202 @@ export default function UploadTestPage() {
       const uploadData = (await uploadResponse.json()) as UploadResult;
 
       if (!uploadResponse.ok || !uploadData.success) {
-        throw new Error(uploadData.error || "Upload failed.");
+        throw new Error(uploadData.error || "Upload save failed.");
+      }
+
+      if (!uploadData.player?.player_name || !uploadData.card?.id) {
+        throw new Error(
+          "Upload returned success, but no saved player/card came back."
+        );
       }
 
       setResult(uploadData);
       setStatusText("Saved.");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Something went wrong.";
+        error instanceof Error ? error.message : "Unknown upload error.";
 
+      setStatusText("Failed.");
       setResult({
         success: false,
         error: message,
       });
-
-      setStatusText("Failed.");
     } finally {
       setLoading(false);
     }
   }
 
-  const profilePlayerName =
-    result?.player?.player_name || extractedStats?.name || manualPlayerName;
+  const profileUrl = result?.player?.player_name
+    ? `/player/${encodeURIComponent(result.player.player_name)}`
+    : null;
 
   return (
     <main style={styles.page}>
       <header style={styles.header}>
         <div>
-          <div style={styles.logo}>The Association</div>
+          <Link href="/" style={styles.logo}>
+            The Association
+          </Link>
+
           <h1 style={styles.title}>Submit Player Card</h1>
+
           <p style={styles.subtitle}>
             Upload a 2K REC player card. The site reads the card, evaluates the
             player, saves the image, and creates a live profile.
           </p>
         </div>
 
-        <a href="/players" style={styles.navButton}>
+        <Link href="/players" style={styles.rosterButton}>
           View Roster
-        </a>
+        </Link>
       </header>
 
-      <section style={styles.panel}>
-        <label style={styles.label}>
-          Player Name Fallback
-          <input
-            value={manualPlayerName}
-            onChange={(event) => setManualPlayerName(event.target.value)}
-            placeholder="Only used if card reader cannot find the name"
-            style={styles.input}
-          />
-        </label>
+      <section style={styles.layout}>
+        <section style={styles.uploadCard}>
+          <label style={styles.label}>
+            Player Name Fallback
+            <input
+              value={manualPlayerName}
+              onChange={(event) => setManualPlayerName(event.target.value)}
+              placeholder="Only used if card reader cannot find the name"
+              style={styles.input}
+            />
+          </label>
 
-        <label style={styles.label}>
-          Player Card Image
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-            style={styles.fileInput}
-          />
-        </label>
+          <label style={styles.label}>
+            Player Card Image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0] ?? null;
+                setFile(selectedFile);
+              }}
+              style={styles.fileInput}
+            />
+          </label>
 
-        <button
-          onClick={handleUpload}
-          disabled={loading}
-          style={{
-            ...styles.button,
-            opacity: loading ? 0.65 : 1,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Processing..." : "Upload + Evaluate"}
-        </button>
+          <button
+            onClick={handleUpload}
+            disabled={loading}
+            style={{
+              ...styles.uploadButton,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? "Working..." : "Upload + Evaluate"}
+          </button>
 
-        {statusText && <p style={styles.status}>{statusText}</p>}
+          {statusText && <p style={styles.status}>{statusText}</p>}
+        </section>
+
+        <section style={styles.infoCard}>
+          <h2 style={styles.infoTitle}>Upload Flow</h2>
+
+          <div style={styles.flowList}>
+            <div style={styles.flowItem}>1. Read card image</div>
+            <div style={styles.flowItem}>2. Extract player stats</div>
+            <div style={styles.flowItem}>3. Evaluate badges and tier</div>
+            <div style={styles.flowItem}>4. Generate player comparison</div>
+            <div style={styles.flowItem}>5. Save to live roster</div>
+          </div>
+        </section>
       </section>
 
       {extractedStats && (
-        <section style={styles.statsPanel}>
-          <h2 style={styles.sectionTitle}>Extracted Stats</h2>
+        <section style={styles.resultsCard}>
+          <div style={styles.resultsHeader}>
+            <div>
+              <h2 style={styles.sectionTitle}>Extracted Stats</h2>
+              <p style={styles.sectionSubtext}>
+                These are the numbers read from the uploaded card before saving.
+              </p>
+            </div>
 
-          <div style={styles.statsGrid}>
-            <div>Player: {extractedStats.name}</div>
-            <div>Games: {extractedStats.games}</div>
-            <div>Points: {extractedStats.points}</div>
-            <div>Assists: {extractedStats.assists}</div>
-            <div>Rebounds: {extractedStats.rebounds}</div>
-            <div>Steals: {extractedStats.steals}</div>
-            <div>Blocks: {extractedStats.blocks}</div>
-            <div>FG%: {extractedStats.fgPct}</div>
-            <div>3PT%: {extractedStats.threePct}</div>
-            <div>FT%: {extractedStats.ftPct}</div>
-            <div>Win%: {extractedStats.winPct}</div>
+            <strong style={styles.playerName}>{extractedStats.name}</strong>
+          </div>
+
+          <div style={styles.statGrid}>
+            <StatBox label="Games" value={extractedStats.games} />
+            <StatBox label="Points" value={extractedStats.points} />
+            <StatBox label="Rebounds" value={extractedStats.rebounds} />
+            <StatBox label="Assists" value={extractedStats.assists} />
+            <StatBox label="Steals" value={extractedStats.steals} />
+            <StatBox label="Blocks" value={extractedStats.blocks} />
+            <StatBox label="Turnovers" value={extractedStats.turnovers} />
+            <StatBox label="Fouls" value={extractedStats.fouls} />
+            <StatBox label="FG%" value={extractedStats.fgPct} suffix="%" />
+            <StatBox label="3PT%" value={extractedStats.threePct} suffix="%" />
+            <StatBox label="FT%" value={extractedStats.ftPct} suffix="%" />
+            <StatBox label="WIN%" value={extractedStats.winPct} suffix="%" />
           </div>
         </section>
       )}
 
       {result && (
-        <section style={result.success ? styles.successBox : styles.errorBox}>
-          <h2>{result.success ? "Saved Online" : "Upload Failed"}</h2>
+        <section
+          style={{
+            ...styles.finalCard,
+            borderColor: result.success
+              ? "rgba(34,197,94,0.65)"
+              : "rgba(248,113,113,0.75)",
+            background: result.success
+              ? "rgba(6,78,59,0.18)"
+              : "rgba(127,29,29,0.36)",
+          }}
+        >
+          <h2 style={styles.finalTitle}>
+            {result.success ? "Player Saved" : "Upload Failed"}
+          </h2>
 
-          <p>{result.message || result.error}</p>
+          {result.success ? (
+            <>
+              <p style={styles.finalText}>
+                {result.message || "Player card was saved successfully."}
+              </p>
 
-          {result.success && profilePlayerName && (
-            <div style={styles.linkRow}>
-              <a
-                href={`/player/${encodeURIComponent(profilePlayerName)}`}
-                style={styles.primaryLink}
-              >
-                Open Full Profile →
-              </a>
+              <div style={styles.savedDetails}>
+                <div>
+                  <span style={styles.smallLabel}>Player</span>
+                  <strong>{result.player?.player_name ?? "Unknown"}</strong>
+                </div>
 
-              <a href="/players" style={styles.secondaryLink}>
-                View Live Roster
-              </a>
-            </div>
+                <div>
+                  <span style={styles.smallLabel}>Tier</span>
+                  <strong>
+                    {result.card?.profile_json?.tier ??
+                      result.card?.profile_json?.styleAndRole?.role ??
+                      "Saved"}
+                  </strong>
+                </div>
+              </div>
+
+              {result.card?.profile_json?.styleAndRole?.fit && (
+                <div style={styles.compBox}>
+                  <span style={styles.smallLabel}>Player Comparison</span>
+                  <p style={styles.compText}>
+                    {result.card.profile_json.styleAndRole.fit}
+                  </p>
+                </div>
+              )}
+
+              <div style={styles.actionRow}>
+                {profileUrl && (
+                  <Link href={profileUrl} style={styles.profileButton}>
+                    Open Player Profile
+                  </Link>
+                )}
+
+                <Link href="/players" style={styles.secondaryAction}>
+                  View Roster
+                </Link>
+              </div>
+            </>
+          ) : (
+            <pre style={styles.errorText}>
+              {result.error || "Unknown upload failure."}
+            </pre>
           )}
         </section>
       )}
@@ -246,170 +357,316 @@ export default function UploadTestPage() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const styles: Record<string, CSSProperties> = {
   page: {
     minHeight: "100vh",
     background:
-      "radial-gradient(circle at top, #202020 0%, #050505 45%, #000 100%)",
+      "radial-gradient(circle at top, #1b1b1b 0%, #060606 42%, #000 100%)",
     color: "white",
-    padding: "32px",
+    padding: "clamp(16px, 4vw, 32px)",
     fontFamily: "Arial, Helvetica, sans-serif",
+    boxSizing: "border-box",
+    overflowX: "hidden",
   },
 
   header: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "24px",
     alignItems: "flex-start",
-    marginBottom: "30px",
+    gap: "20px",
+    flexWrap: "wrap",
+    marginBottom: "28px",
   },
 
   logo: {
-    fontSize: "34px",
-    fontWeight: 900,
+    color: "white",
+    textDecoration: "none",
+    fontSize: "clamp(26px, 6vw, 40px)",
+    fontWeight: 950,
     letterSpacing: "-1px",
   },
 
   title: {
-    fontSize: "44px",
-    margin: "10px 0 8px",
+    margin: "10px 0",
     color: "#facc15",
+    fontSize: "clamp(34px, 9vw, 56px)",
+    lineHeight: 1,
+    fontWeight: 950,
+    letterSpacing: "-1px",
   },
 
   subtitle: {
-    color: "#cbd5e1",
-    maxWidth: "760px",
-    lineHeight: 1.5,
+    margin: 0,
+    maxWidth: "820px",
+    color: "#e5e7eb",
+    lineHeight: 1.45,
+    fontSize: "clamp(15px, 3.5vw, 18px)",
   },
 
-  navButton: {
-    border: "1px solid rgba(250,204,21,0.7)",
+  rosterButton: {
     color: "#facc15",
+    border: "1px solid rgba(250,204,21,0.7)",
     textDecoration: "none",
     padding: "12px 18px",
     borderRadius: "12px",
-    fontWeight: 900,
+    fontWeight: 950,
     textTransform: "uppercase",
+    whiteSpace: "nowrap",
   },
 
-  panel: {
+  layout: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 520px))",
+    gap: "24px",
+    alignItems: "stretch",
+    marginTop: "28px",
+  },
+
+  uploadCard: {
+    width: "100%",
     maxWidth: "520px",
+    border: "1px solid rgba(255,255,255,0.18)",
     background: "rgba(12,12,12,0.96)",
-    border: "1px solid rgba(255,255,255,0.16)",
     borderRadius: "18px",
-    padding: "22px",
+    padding: "clamp(18px, 4vw, 24px)",
+    boxSizing: "border-box",
+  },
+
+  infoCard: {
+    width: "100%",
+    maxWidth: "520px",
+    border: "1px solid rgba(250,204,21,0.24)",
+    background: "rgba(12,12,12,0.76)",
+    borderRadius: "18px",
+    padding: "clamp(18px, 4vw, 24px)",
+    boxSizing: "border-box",
+  },
+
+  infoTitle: {
+    margin: "0 0 16px",
+    color: "#facc15",
+    fontSize: "24px",
+  },
+
+  flowList: {
     display: "flex",
     flexDirection: "column",
-    gap: "18px",
+    gap: "10px",
+  },
+
+  flowItem: {
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: "12px",
+    padding: "12px",
+    color: "#e5e7eb",
+    fontWeight: 800,
+    background: "rgba(255,255,255,0.04)",
   },
 
   label: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    fontWeight: 800,
-    color: "#f8fafc",
+    display: "block",
+    color: "white",
+    fontWeight: 950,
+    marginBottom: "18px",
   },
 
   input: {
-    background: "#171717",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.16)",
+    display: "block",
+    width: "100%",
+    marginTop: "10px",
+    background: "rgba(255,255,255,0.055)",
+    border: "1px solid rgba(255,255,255,0.2)",
     borderRadius: "12px",
-    padding: "12px",
-    fontSize: "15px",
+    color: "white",
+    padding: "14px",
+    fontSize: "16px",
+    boxSizing: "border-box",
   },
 
   fileInput: {
-    background: "#171717",
-    color: "white",
-    border: "1px solid rgba(255,255,255,0.16)",
+    display: "block",
+    width: "100%",
+    marginTop: "10px",
+    background: "rgba(255,255,255,0.055)",
+    border: "1px solid rgba(255,255,255,0.2)",
     borderRadius: "12px",
+    color: "white",
     padding: "12px",
     fontSize: "15px",
+    boxSizing: "border-box",
   },
 
-  button: {
+  uploadButton: {
+    width: "100%",
     background: "#facc15",
-    color: "black",
+    color: "#111",
     border: "none",
-    borderRadius: "12px",
-    padding: "14px",
-    fontSize: "15px",
-    fontWeight: 900,
+    borderRadius: "14px",
+    padding: "16px",
+    fontWeight: 950,
     textTransform: "uppercase",
+    fontSize: "16px",
+    marginTop: "4px",
   },
 
   status: {
+    margin: "18px 0 0",
     color: "#facc15",
-    fontWeight: 800,
-    margin: 0,
+    fontWeight: 950,
   },
 
-  statsPanel: {
-    marginTop: "24px",
-    maxWidth: "720px",
+  resultsCard: {
+    marginTop: "26px",
+    width: "100%",
+    border: "1px solid rgba(255,255,255,0.16)",
     background: "rgba(12,12,12,0.96)",
-    border: "1px solid rgba(0,188,255,0.35)",
     borderRadius: "18px",
-    padding: "22px",
+    padding: "clamp(18px, 4vw, 24px)",
+    boxSizing: "border-box",
+  },
+
+  resultsHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "16px",
+    flexWrap: "wrap",
+    marginBottom: "18px",
   },
 
   sectionTitle: {
-    marginTop: 0,
-    color: "#38bdf8",
+    margin: 0,
+    color: "#facc15",
+    fontSize: "28px",
+  },
+
+  sectionSubtext: {
+    margin: "8px 0 0",
+    color: "#cbd5e1",
+  },
+
+  playerName: {
+    color: "white",
+    fontSize: "22px",
+    wordBreak: "break-word",
+  },
+
+  statGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+    gap: "12px",
+  },
+
+  statBox: {
+    border: "1px solid rgba(255,255,255,0.13)",
+    borderRadius: "14px",
+    padding: "14px",
+    background: "rgba(255,255,255,0.045)",
+    minWidth: 0,
+  },
+
+  statLabel: {
+    display: "block",
+    color: "#94a3b8",
+    fontSize: "12px",
+    fontWeight: 950,
     textTransform: "uppercase",
     letterSpacing: "1px",
   },
 
-  statsGrid: {
+  statValue: {
+    display: "block",
+    marginTop: "8px",
+    color: "white",
+    fontSize: "22px",
+  },
+
+  finalCard: {
+    marginTop: "26px",
+    width: "100%",
+    maxWidth: "860px",
+    border: "1px solid",
+    borderRadius: "18px",
+    padding: "clamp(18px, 4vw, 24px)",
+    boxSizing: "border-box",
+  },
+
+  finalTitle: {
+    margin: "0 0 14px",
+    fontSize: "30px",
+  },
+
+  finalText: {
+    margin: 0,
+    color: "#e5e7eb",
+    lineHeight: 1.45,
+  },
+
+  savedDetails: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "10px",
-    fontFamily: "monospace",
-    fontWeight: 800,
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "14px",
+    marginTop: "18px",
   },
 
-  successBox: {
-    marginTop: "24px",
-    maxWidth: "720px",
-    background: "rgba(6,78,59,0.35)",
-    border: "1px solid rgba(34,197,94,0.6)",
-    borderRadius: "18px",
-    padding: "22px",
+  smallLabel: {
+    display: "block",
+    color: "#94a3b8",
+    fontSize: "12px",
+    fontWeight: 950,
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+    marginBottom: "6px",
   },
 
-  errorBox: {
-    marginTop: "24px",
-    maxWidth: "720px",
-    background: "rgba(127,29,29,0.35)",
-    border: "1px solid rgba(248,113,113,0.6)",
-    borderRadius: "18px",
-    padding: "22px",
+  compBox: {
+    marginTop: "18px",
+    border: "1px solid rgba(250,204,21,0.28)",
+    borderRadius: "14px",
+    padding: "16px",
+    background: "rgba(0,0,0,0.22)",
   },
 
-  linkRow: {
+  compText: {
+    margin: 0,
+    color: "#e5e7eb",
+    lineHeight: 1.55,
+    overflowWrap: "anywhere",
+  },
+
+  actionRow: {
     display: "flex",
     flexWrap: "wrap",
     gap: "12px",
-    marginTop: "16px",
+    marginTop: "20px",
   },
 
-  primaryLink: {
+  profileButton: {
     background: "#facc15",
-    color: "black",
+    color: "#111",
     textDecoration: "none",
-    padding: "12px 16px",
     borderRadius: "12px",
-    fontWeight: 900,
+    padding: "13px 16px",
+    fontWeight: 950,
+    textTransform: "uppercase",
   },
 
-  secondaryLink: {
-    border: "1px solid rgba(250,204,21,0.7)",
+  secondaryAction: {
     color: "#facc15",
+    border: "1px solid rgba(250,204,21,0.55)",
     textDecoration: "none",
-    padding: "12px 16px",
     borderRadius: "12px",
-    fontWeight: 900,
+    padding: "13px 16px",
+    fontWeight: 950,
+    textTransform: "uppercase",
+  },
+
+  errorText: {
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    color: "#fecaca",
+    margin: 0,
+    lineHeight: 1.5,
+    fontFamily: "monospace",
   },
 };

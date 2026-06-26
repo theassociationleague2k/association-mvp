@@ -16,9 +16,9 @@ export default function HomePage() {
           aria-label="Upload Player"
           style={{
             ...styles.hotspot,
-            top: "70%",
-            left: "9%",
-            width: "34%",
+            top: "69.5%",
+            left: "8.5%",
+            width: "34.5%",
             height: "12%",
           }}
         />
@@ -28,9 +28,9 @@ export default function HomePage() {
           aria-label="Roster"
           style={{
             ...styles.hotspot,
-            top: "70%",
+            top: "69.5%",
             left: "43%",
-            width: "26%",
+            width: "27%",
             height: "12%",
           }}
         />
@@ -40,9 +40,9 @@ export default function HomePage() {
           aria-label="About"
           style={{
             ...styles.hotspot,
-            top: "70%",
-            left: "69%",
-            width: "24%",
+            top: "69.5%",
+            left: "70%",
+            width: "22%",
             height: "12%",
           }}
         />
@@ -67,6 +67,7 @@ const styles: Record<string, CSSProperties> = {
     position: "relative",
     width: "min(100vw, calc(100vh * 16 / 9))",
     aspectRatio: "16 / 9",
+    maxWidth: "1600px",
   },
 
   homeImage: {
@@ -87,5 +88,7 @@ const styles: Record<string, CSSProperties> = {
     cursor: "pointer",
     background: "transparent",
     borderRadius: "10px",
+    WebkitTapHighlightColor: "transparent",
+    touchAction: "manipulation",
   },
 };
